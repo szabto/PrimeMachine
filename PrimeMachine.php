@@ -28,6 +28,7 @@ class PrimeMachine {
 	 **/
 	public static function generate( $range ) {
 		if( $range[1] < self::$lastRange ) return;
+		if( $range[1] < $range[0] ) throw new Exception("Invalid value passed.");
 
 		for( $i=$range[0]; $i<$range[1];$i++) {
 			if( self::isPrime($i) )
@@ -44,7 +45,8 @@ class PrimeMachine {
 	 * @author Tamás Szabó <szabto@gmail.com>
 	 **/
 	public static function isPrime( $num ) {
-		if( ($num < 2 || $num % 2 == 0) && $num != 2 ) return false;
+		if( $num < 2 || $num % 2 == 0 ) return $num == 2;
+		if( $num < self::$lastRange ) return in_array($num, self::$primes);
 
 		for($i=3;$i<=ceil(sqrt($num));$i+=2) {
 			if( $num % $i == 0 ) {
@@ -62,8 +64,7 @@ class PrimeMachine {
 	 * @author Tamás Szabó <szabto@gmail.com>
 	 **/
 	public static function split($num) {
-		if( !count(self::$primes) ) self::generate([0,1000]);
-		else if( self::$primes[count(self::$primes)-1] < $num ) { self::generate(self::$lastRange, $num); }
+		if( $num+100 > self::$lastRange ) { self::generate([self::$lastRange, $num+100]); }
 
 		$items = [];
 		while( $num != 1 ) {
@@ -85,14 +86,16 @@ class PrimeMachine {
 	 * @author Tamás Szabó <szabto@gmail.com>
 	 **/
 	public static function getLastPrime( $arr ) {
-		$c = count($arr);
-		$last = 2;
-		for($i=0;$i<$c;$i++) {
-			if( self::isPrime($arr[$i]) && $arr[$i] > $last ) {
-				$last = $arr[$i];
+		rsort($arr);
+		$max = $arr[0];
+		if( $max+100 > self::$lastRange ) { self::generate([self::$lastRange, $max+100]); }
+
+		foreach( $arr as $num ) {
+			if( in_array($num, self::$primes) ) {
+				return $num;
 			}
 		}
-		return $last;
+		return false;
 	}
 
 	/**
@@ -104,7 +107,7 @@ class PrimeMachine {
 	 **/
 	public static function getNextPrime( $num ) {
 		if( $num+100 > self::$lastRange ) { self::generate([self::$lastRange, $num+100]); }
-		if( !count(self::$primes) ) self::generate([0,1000]);
+
 		foreach( self::$primes as $prime ) {
 			if( $prime > $num ) {
 				return $prime;
